@@ -2,6 +2,7 @@ import fastifyCors from '@fastify/cors'
 import fastifyJwt from '@fastify/jwt'
 import fastifySwagger from '@fastify/swagger'
 import { fastifySwaggerUi } from '@fastify/swagger-ui'
+import { env } from '@repo/env'
 import { fastify } from 'fastify'
 import {
   jsonSchemaTransform,
@@ -35,10 +36,11 @@ app.register(fastifySwagger, {
     servers: [],
     components: {
       securitySchemes: {
-        apiKey: {
-          type: 'apiKey',
-          name: 'Authorization',
-          in: 'header',
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'JWT obtained by authorization route',
         },
       },
     },
@@ -51,7 +53,7 @@ app.register(fastifySwaggerUi, {
 })
 
 app.register(fastifyJwt, {
-  secret: 'my-jwt-secret',
+  secret: env.JWT_SECRET,
 })
 
 app.register(fastifyCors)
@@ -63,6 +65,6 @@ app.register(requestPasswordRecover)
 app.register(resetPassword)
 app.register(authenticateWithGithub)
 
-app.listen({ port: 3333 }).then(() => {
+app.listen({ port: env.SERVER_PORT }).then(() => {
   console.log('HTTP Server running.')
 })
