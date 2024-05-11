@@ -1,4 +1,3 @@
-import { Role } from '@prisma/client'
 import { roleSchema } from '@repo/auth'
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
@@ -34,13 +33,13 @@ export async function getMembership(app: FastifyInstance) {
         const { slug } = request.params
         const { membership } = await request.getUserMembership(slug)
 
-        return {
+        return reply.status(200).send({
           membership: {
             id: membership.id,
             role: roleSchema.parse(membership.role),
             organizationId: membership.organizationId,
           },
-        }
+        })
       },
     )
 }
