@@ -1,13 +1,12 @@
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
-import z from 'zod'
+import { z } from 'zod'
 
 import { auth } from '@/http/middlewares/auth'
+import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
+import { UnauthorizedError } from '@/http/routes/_errors/unauthorized-error'
 import { prisma } from '@/lib/prisma'
 import { getUserPermissions } from '@/utils/get-user-permissions'
-
-import { BadRequestError } from '../_errors/bad-request-error'
-import { UnauthorizedError } from '../_errors/unauthorized-error'
 
 export async function revokeInvite(app: FastifyInstance) {
   app
@@ -17,15 +16,15 @@ export async function revokeInvite(app: FastifyInstance) {
       '/organizations/:slug/invites/:inviteId',
       {
         schema: {
-          tags: ['invites'],
-          summary: 'Revoke an invite',
+          tags: ['Invites'],
+          summary: 'Revoke a invite',
           security: [{ bearerAuth: [] }],
           params: z.object({
             slug: z.string(),
             inviteId: z.string().uuid(),
           }),
           response: {
-            204: null,
+            204: z.null(),
           },
         },
       },
@@ -38,7 +37,7 @@ export async function revokeInvite(app: FastifyInstance) {
         const { cannot } = getUserPermissions(userId, membership.role)
 
         if (cannot('delete', 'Invite')) {
-          throw new UnauthorizedError("You're not allowed to delete invites.")
+          throw new UnauthorizedError(`You're not allowed to delete an invite.`)
         }
 
         const invite = await prisma.invite.findUnique({
@@ -49,7 +48,7 @@ export async function revokeInvite(app: FastifyInstance) {
         })
 
         if (!invite) {
-          throw new BadRequestError('Invite not found')
+          throw new BadRequestError('Invite not found.')
         }
 
         await prisma.invite.delete({
@@ -58,7 +57,7 @@ export async function revokeInvite(app: FastifyInstance) {
           },
         })
 
-        return reply.status(204).send()
+        reply.code(204).send()
       },
     )
 }

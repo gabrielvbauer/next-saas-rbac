@@ -1,12 +1,11 @@
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
-import z from 'zod'
+import { z } from 'zod'
 
 import { auth } from '@/http/middlewares/auth'
+import { UnauthorizedError } from '@/http/routes/_errors/unauthorized-error'
 import { prisma } from '@/lib/prisma'
 import { getUserPermissions } from '@/utils/get-user-permissions'
-
-import { UnauthorizedError } from '../_errors/unauthorized-error'
 
 export async function getOrganizationBilling(app: FastifyInstance) {
   app
@@ -16,7 +15,7 @@ export async function getOrganizationBilling(app: FastifyInstance) {
       '/organizations/:slug/billing',
       {
         schema: {
-          tags: ['organizations'],
+          tags: ['Billing'],
           summary: 'Get billing information from organization',
           security: [{ bearerAuth: [] }],
           params: z.object({
@@ -41,7 +40,7 @@ export async function getOrganizationBilling(app: FastifyInstance) {
           },
         },
       },
-      async (request, reply) => {
+      async (request) => {
         const { slug } = request.params
         const userId = await request.getCurrentUserId()
         const { organization, membership } =
@@ -62,14 +61,14 @@ export async function getOrganizationBilling(app: FastifyInstance) {
               role: { not: 'BILLING' },
             },
           }),
-
           prisma.project.count({
             where: {
               organizationId: organization.id,
             },
           }),
         ])
-        return reply.status(200).send({
+
+        return {
           billing: {
             seats: {
               amount: amountOfMembers,
@@ -83,7 +82,7 @@ export async function getOrganizationBilling(app: FastifyInstance) {
             },
             total: amountOfMembers * 10 + amountOfProjects * 20,
           },
-        })
+        }
       },
     )
 }

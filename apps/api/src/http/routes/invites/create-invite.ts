@@ -1,14 +1,13 @@
 import { roleSchema } from '@repo/auth'
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
-import z from 'zod'
+import { z } from 'zod'
 
 import { auth } from '@/http/middlewares/auth'
+import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
+import { UnauthorizedError } from '@/http/routes/_errors/unauthorized-error'
 import { prisma } from '@/lib/prisma'
 import { getUserPermissions } from '@/utils/get-user-permissions'
-
-import { BadRequestError } from '../_errors/bad-request-error'
-import { UnauthorizedError } from '../_errors/unauthorized-error'
 
 export async function createInvite(app: FastifyInstance) {
   app
@@ -18,7 +17,7 @@ export async function createInvite(app: FastifyInstance) {
       '/organizations/:slug/invites',
       {
         schema: {
-          tags: ['invites'],
+          tags: ['Invites'],
           summary: 'Create a new invite',
           security: [{ bearerAuth: [] }],
           body: z.object({
@@ -45,7 +44,7 @@ export async function createInvite(app: FastifyInstance) {
 
         if (cannot('create', 'Invite')) {
           throw new UnauthorizedError(
-            "You're not allowed to create new invites.",
+            `You're not allowed to create new invites.`,
           )
         }
 
@@ -55,10 +54,10 @@ export async function createInvite(app: FastifyInstance) {
 
         if (
           organization.shouldAttachUsersByDomain &&
-          organization.domain === domain
+          domain !== organization.domain
         ) {
           throw new BadRequestError(
-            `Users with "${domain}" domain will join your organization automatically on login.`,
+            `Users with '${domain}' domain will join your organization automatically on login.`,
           )
         }
 
@@ -73,7 +72,7 @@ export async function createInvite(app: FastifyInstance) {
 
         if (inviteWithSameEmail) {
           throw new BadRequestError(
-            'Another invite with same email already exists.',
+            'Another invite with same e-mail already exists.',
           )
         }
 
@@ -88,7 +87,7 @@ export async function createInvite(app: FastifyInstance) {
 
         if (memberWithSameEmail) {
           throw new BadRequestError(
-            'A member with this email already belongs to your organization.',
+            'A member with this e-mail already belongs to your organization.',
           )
         }
 

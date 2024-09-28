@@ -1,45 +1,44 @@
 import { roleSchema } from '@repo/auth'
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
-import z from 'zod'
+import { z } from 'zod'
 
+import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
 import { prisma } from '@/lib/prisma'
-
-import { BadRequestError } from '../_errors/bad-request-error'
 
 export async function getInvite(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get(
     '/invites/:inviteId',
     {
       schema: {
-        tags: ['invites'],
-        summary: 'Get invite details',
+        tags: ['Invites'],
+        summary: 'Get an invite',
         params: z.object({
           inviteId: z.string().uuid(),
         }),
         response: {
-          201: z.object({
+          200: z.object({
             invite: z.object({
               id: z.string().uuid(),
-              email: z.string().email(),
               role: roleSchema,
+              email: z.string().email(),
               createdAt: z.date(),
+              organization: z.object({
+                name: z.string(),
+              }),
               author: z
                 .object({
                   id: z.string().uuid(),
                   name: z.string().nullable(),
-                  avatarUrl: z.string().nullable(),
+                  avatarUrl: z.string().url().nullable(),
                 })
                 .nullable(),
-              organization: z.object({
-                name: z.string(),
-              }),
             }),
           }),
         },
       },
     },
-    async (request, reply) => {
+    async (request) => {
       const { inviteId } = request.params
 
       const invite = await prisma.invite.findUnique({
@@ -70,9 +69,7 @@ export async function getInvite(app: FastifyInstance) {
         throw new BadRequestError('Invite not found')
       }
 
-      return reply.send({
-        invite,
-      })
+      return { invite }
     },
   )
 }

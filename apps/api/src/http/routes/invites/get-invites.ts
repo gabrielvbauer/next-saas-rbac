@@ -1,13 +1,12 @@
 import { roleSchema } from '@repo/auth'
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
-import z from 'zod'
+import { z } from 'zod'
 
 import { auth } from '@/http/middlewares/auth'
+import { UnauthorizedError } from '@/http/routes/_errors/unauthorized-error'
 import { prisma } from '@/lib/prisma'
 import { getUserPermissions } from '@/utils/get-user-permissions'
-
-import { UnauthorizedError } from '../_errors/unauthorized-error'
 
 export async function getInvites(app: FastifyInstance) {
   app
@@ -17,7 +16,7 @@ export async function getInvites(app: FastifyInstance) {
       '/organizations/:slug/invites',
       {
         schema: {
-          tags: ['invites'],
+          tags: ['Invites'],
           summary: 'Get all organization invites',
           security: [{ bearerAuth: [] }],
           params: z.object({
@@ -28,8 +27,8 @@ export async function getInvites(app: FastifyInstance) {
               invites: z.array(
                 z.object({
                   id: z.string().uuid(),
-                  email: z.string().email(),
                   role: roleSchema,
+                  email: z.string().email(),
                   createdAt: z.date(),
                   author: z
                     .object({
@@ -43,7 +42,7 @@ export async function getInvites(app: FastifyInstance) {
           },
         },
       },
-      async (request, reply) => {
+      async (request) => {
         const { slug } = request.params
         const userId = await request.getCurrentUserId()
         const { organization, membership } =
@@ -53,7 +52,7 @@ export async function getInvites(app: FastifyInstance) {
 
         if (cannot('get', 'Invite')) {
           throw new UnauthorizedError(
-            "You're not allowed to get organization invites.",
+            `You're not allowed to get organization invites.`,
           )
         }
 
@@ -74,13 +73,11 @@ export async function getInvites(app: FastifyInstance) {
             },
           },
           orderBy: {
-            createdAt: 'asc',
+            createdAt: 'desc',
           },
         })
 
-        return reply.status(200).send({
-          invites,
-        })
+        return { invites }
       },
     )
 }

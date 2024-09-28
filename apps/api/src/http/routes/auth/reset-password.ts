@@ -1,18 +1,17 @@
 import { hash } from 'bcryptjs'
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
-import z from 'zod'
+import { z } from 'zod'
 
+import { UnauthorizedError } from '@/http/routes/_errors/unauthorized-error'
 import { prisma } from '@/lib/prisma'
-
-import { UnauthorizedError } from '../_errors/unauthorized-error'
 
 export async function resetPassword(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().post(
     '/password/reset',
     {
       schema: {
-        tags: ['auth'],
+        tags: ['Auth'],
         summary: 'Get authenticated user profile',
         body: z.object({
           code: z.string(),
@@ -27,9 +26,7 @@ export async function resetPassword(app: FastifyInstance) {
       const { code, password } = request.body
 
       const tokenFromCode = await prisma.token.findUnique({
-        where: {
-          id: code,
-        },
+        where: { id: code },
       })
 
       if (!tokenFromCode) {
@@ -47,7 +44,6 @@ export async function resetPassword(app: FastifyInstance) {
             passwordHash,
           },
         }),
-
         prisma.token.delete({
           where: {
             id: code,
@@ -55,7 +51,7 @@ export async function resetPassword(app: FastifyInstance) {
         }),
       ])
 
-      return reply.status(204)
+      return reply.status(204).send()
     },
   )
 }

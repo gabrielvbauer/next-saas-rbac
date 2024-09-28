@@ -1,7 +1,7 @@
 import { roleSchema } from '@repo/auth'
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
-import z from 'zod'
+import { z } from 'zod'
 
 import { auth } from '@/http/middlewares/auth'
 import { prisma } from '@/lib/prisma'
@@ -14,11 +14,11 @@ export async function getOrganizations(app: FastifyInstance) {
       '/organizations',
       {
         schema: {
-          tags: ['organizations'],
+          tags: ['Organizations'],
           summary: 'Get organizations where user is a member',
           security: [{ bearerAuth: [] }],
           response: {
-            201: z.object({
+            200: z.object({
               organizations: z.array(
                 z.object({
                   id: z.string().uuid(),
@@ -32,7 +32,7 @@ export async function getOrganizations(app: FastifyInstance) {
           },
         },
       },
-      async (request, reply) => {
+      async (request) => {
         const userId = await request.getCurrentUserId()
 
         const organizations = await prisma.organization.findMany({
@@ -68,9 +68,7 @@ export async function getOrganizations(app: FastifyInstance) {
           },
         )
 
-        return reply.status(201).send({
-          organizations: organizationsWithUserRole,
-        })
+        return { organizations: organizationsWithUserRole }
       },
     )
 }

@@ -1,12 +1,11 @@
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
-import z from 'zod'
+import { z } from 'zod'
 
 import { auth } from '@/http/middlewares/auth'
+import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
 import { prisma } from '@/lib/prisma'
 import { createSlug } from '@/utils/create-slug'
-
-import { BadRequestError } from '../_errors/bad-request-error'
 
 export async function createOrganization(app: FastifyInstance) {
   app
@@ -16,7 +15,7 @@ export async function createOrganization(app: FastifyInstance) {
       '/organizations',
       {
         schema: {
-          tags: ['organizations'],
+          tags: ['Organizations'],
           summary: 'Create a new organization',
           security: [{ bearerAuth: [] }],
           body: z.object({
@@ -33,6 +32,7 @@ export async function createOrganization(app: FastifyInstance) {
       },
       async (request, reply) => {
         const userId = await request.getCurrentUserId()
+
         const { name, domain, shouldAttachUsersByDomain } = request.body
 
         if (domain) {
@@ -44,7 +44,7 @@ export async function createOrganization(app: FastifyInstance) {
 
           if (organizationByDomain) {
             throw new BadRequestError(
-              'Another organization with same domain already exists',
+              'Another organization with same domain already exists.',
             )
           }
         }

@@ -1,9 +1,10 @@
 import { roleSchema } from '@repo/auth'
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
-import z from 'zod'
+import { z } from 'zod'
 
 import { auth } from '@/http/middlewares/auth'
+
 export async function getMembership(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
@@ -12,7 +13,7 @@ export async function getMembership(app: FastifyInstance) {
       '/organization/:slug/membership',
       {
         schema: {
-          tags: ['organizations'],
+          tags: ['Organizations'],
           summary: 'Get user membership on organization',
           security: [{ bearerAuth: [] }],
           params: z.object({
@@ -23,23 +24,26 @@ export async function getMembership(app: FastifyInstance) {
               membership: z.object({
                 id: z.string().uuid(),
                 role: roleSchema,
+                userId: z.string().uuid(),
                 organizationId: z.string().uuid(),
               }),
             }),
           },
         },
       },
-      async (request, reply) => {
+      async (request) => {
         const { slug } = request.params
+
         const { membership } = await request.getUserMembership(slug)
 
-        return reply.status(200).send({
+        return {
           membership: {
             id: membership.id,
-            role: roleSchema.parse(membership.role),
+            role: membership.role,
+            userId: membership.userId,
             organizationId: membership.organizationId,
           },
-        })
+        }
       },
     )
 }

@@ -1,13 +1,12 @@
 import { organizationSchema } from '@repo/auth'
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
-import z from 'zod'
+import { z } from 'zod'
 
 import { auth } from '@/http/middlewares/auth'
+import { UnauthorizedError } from '@/http/routes/_errors/unauthorized-error'
 import { prisma } from '@/lib/prisma'
 import { getUserPermissions } from '@/utils/get-user-permissions'
-
-import { UnauthorizedError } from '../_errors/unauthorized-error'
 
 export async function shutdownOrganization(app: FastifyInstance) {
   app
@@ -17,7 +16,7 @@ export async function shutdownOrganization(app: FastifyInstance) {
       '/organizations/:slug',
       {
         schema: {
-          tags: ['organizations'],
+          tags: ['Organizations'],
           summary: 'Shutdown organization',
           security: [{ bearerAuth: [] }],
           params: z.object({
@@ -30,7 +29,6 @@ export async function shutdownOrganization(app: FastifyInstance) {
       },
       async (request, reply) => {
         const { slug } = request.params
-
         const userId = await request.getCurrentUserId()
         const { membership, organization } =
           await request.getUserMembership(slug)
@@ -41,7 +39,7 @@ export async function shutdownOrganization(app: FastifyInstance) {
 
         if (cannot('delete', authOrganization)) {
           throw new UnauthorizedError(
-            "You're not allowed to shutdown this organization",
+            `You're not allowed to shutdown this organization.`,
           )
         }
 
