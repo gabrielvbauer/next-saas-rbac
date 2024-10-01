@@ -9,7 +9,7 @@ export default function ForgotPasswordPage() {
     <form action="" className="space-y-4">
       <div className="space-y-1">
         <Label htmlFor="email">E-mail</Label>
-        <Input name="email" type="email" id="email" />
+        <Input name="email" id="email" />
       </div>
 
       <Button type="submit" className="w-full">
